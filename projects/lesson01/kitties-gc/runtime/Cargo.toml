@@ -28,7 +28,7 @@ std = [
 [package]
 authors = ['gc']
 edition = '2018'
-name = 'kitties-runtime'
+name = 'kitties-gc-runtime'
 version = '2.0.0'
 [build-dependencies.wasm-builder-runner]
 package = 'substrate-wasm-builder-runner'

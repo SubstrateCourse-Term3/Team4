@@ -15,9 +15,9 @@ fn main() {
 		name: "Substrate Node",
 		commit: env!("VERGEN_SHA_SHORT"),
 		version: env!("CARGO_PKG_VERSION"),
-		executable_name: "kitties",
+		executable_name: "kitties-gc",
 		author: "gc",
-		description: "kitties",
+		description: "kitties-gc",
 		support_url: "support.anonymous.an",
 	};
 

@@ -1,5 +1,5 @@
 use primitives::{Pair, Public};
-use kitties_runtime::{
+use kitties_gc_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, IndicesConfig, SystemConfig, WASM_BINARY, 
 };
