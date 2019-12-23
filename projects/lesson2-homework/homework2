@@ -1,0 +1,42 @@
+数据结构与存储
+一只猫是一个token 颜色 价格 主人 原始资产的数量
+//外观 第几代 修养的时间 猫的特性 亲属关系 猫的介绍 是否怀孕
+kitties:
+token:
+mapping (unit256=>address)->猫->猫的主人
+kitties->geners,birthTime,fastestCanBirth,matronId,sireId,sirungWithId,nextCanBirth,generation
+keiities[]  猫咪数据库 每产生一只 数量加一
+
+
+
+
+可调用函数:
+1.查询猫 正在有哪些猫在繁殖 2.更改主人 权限管理  3.生成猫  4.两只猫dna进行 5.买猫和卖猫 6.手续费设计 7.饲养 8.拍卖  9.营销赠送 10.猫咪价格 最后五只拍卖的价格加成 11.猫咪释放 12.从ipfs后台获取猫的数据数据
+// 通用模块: 权限管理 资产发行 定义原始资产的数量
+//猫的作用: 卖掉 改名 送给别人 繁殖
+queryWithBirth()
+setContractNewOwner()
+birthNewKitty()
+setOwner()
+sellkitty()
+buykitty()
+getfreeKitty()
+setKittyFee()
+feed()
+setKittyPrice()
+KittyRelease()
+setMarriedTime()
+getMyKitty()
+
+算法伪代码
+根据父母的基因计算下一代的基因 找到父母id 在母猫上设置属性值为公猫 设置一段时间无法怀孕 然后生成下一代猫 设定新猫的主人为母猫 可能为父母的基因和下一次繁殖最快时间
+具体为：
+查找：
+mapping 查找映射关系查找对应的猫
+genKitty=get_16_bits(hash((matronId address +sireId address)+blockNum) )
+
+
+
+
+
+
