@@ -21,7 +21,7 @@ decl_storage! {
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		/// Create a new kitty
-		pub fn create(origin) {
+		pub fn create(origin)  -> Result<(), &'static str> {
 			let sender = ensure_signed(origin)?;
 			let payload = (
 				<randomness_collective_flip::Module<T> as Randomness<T::Hash>>::random_seed(),
@@ -31,8 +31,12 @@ decl_module! {
 			let dna = payload.using_encoded(blake2_128);
 			let kitty = Kitty(dna);
 			let count = Self::kitties_count();
+			//let count = u32::max_value();
+			let temp = count.checked_add(1)
+            .ok_or("Overflow adding a new kitty")?;
 			Kitties::insert(count, kitty);
 			KittiesCount::put(count + 1);
+			Ok(())
 		}
 	}
 }
