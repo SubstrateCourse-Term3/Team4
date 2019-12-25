@@ -61,9 +61,12 @@ pub type Hash = primitives::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
+// pub type BlockNumber = u64;
+
+// pub type Nonce = u64;
 /// Used for the module template in `./template.rs`
 mod template;
-
+mod substratekitties;
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -251,7 +254,10 @@ impl sudo::Trait for Runtime {
 	type Event = Event;
 	type Proposal = Call;
 }
+//Add this line
+impl substratekitties::Trait for Runtime{
 
+}
 /// Used for the module template in `./template.rs`
 impl template::Trait for Runtime {
 	type Event = Event;
@@ -272,6 +278,8 @@ construct_runtime!(
 		Sudo: sudo,
 		// Used for the module template in `./template.rs`
 		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		// Add this line
+		Substratekitties: substratekitties::{Module, Call, Storage},
 	}
 );
 
