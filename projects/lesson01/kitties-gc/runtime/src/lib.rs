@@ -66,6 +66,7 @@ pub type DigestItem = generic::DigestItem<Hash>;
 // pub type Nonce = u64;
 /// Used for the module template in `./template.rs`
 mod template;
+//Add this line
 mod substratekitties;
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -119,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// `SLOT_DURATION` instead (like the timestamp module for calculating the
 /// minimum period).
 /// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 2000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -256,8 +257,9 @@ impl sudo::Trait for Runtime {
 }
 //Add this line
 impl substratekitties::Trait for Runtime{
-
+	type Event = Event;
 }
+
 /// Used for the module template in `./template.rs`
 impl template::Trait for Runtime {
 	type Event = Event;
@@ -279,7 +281,7 @@ construct_runtime!(
 		// Used for the module template in `./template.rs`
 		TemplateModule: template::{Module, Call, Storage, Event<T>},
 		// Add this line
-		Substratekitties: substratekitties::{Module, Call, Storage},
+		Substratekitties: substratekitties::{Module, Call, Storage, Event<T>},
 	}
 );
 
