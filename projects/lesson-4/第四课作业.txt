@@ -1,0 +1,36 @@
+重构 create，使⽤用新的帮助函数
+▪ 完成 combine_dna
+
+这部分作业写在源程序里面了。
+
+==========================================================================================
+▪ 设计加密猫模块 V3
+ transfer kitty 转移猫
+▪ 要求复杂度必须优于 O(n)  
+
+	fn transfer_kitty{
+		//如果恰好转移的是用户最后一只猫，那么把OwnedKitties最后一只的数据删除，同时把 OwnedKittiesCount - 1；
+		
+		//如果转移的不是最后一只猫。
+		//把最后一只猫的数据，覆盖到被转移的那只猫身的 user_kitties_id 上。同时清空最后一只猫的数据，OwnedKittiesCount - 1；
+		
+		//这么做会打乱用户猫原有的顺序，但效率是最高的。
+	}
+
+=======================================================================
+在 setting -> developer 里面对新加的类型，增加JSON解释说。
+
+{
+  "Kitty": "[u8; 16]",
+  "KittyIndex": "u32"
+}
+
+可以在 Javascript 里面添加下面代码，对小猫的信息进行查询。
+
+const count = await api.query.kitties.kittiesCount()
+console.log(count)
+
+const kitties = await Promise.all(
+	new Array(+count).fill(0).map((x,i) => api.query.kitties.kitties(i))
+)
+console.log(kitties)
