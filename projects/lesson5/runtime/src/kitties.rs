@@ -59,11 +59,11 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 			//let owner = Self::owner_of(kitty_id).ok_or("No owner for this kitty")?;
 			//let node : KittyLinkedItem = <OwnedKitties<T>>::read(&sender, kitty_id).ok_or("No owner")?;
-			let node = <OwnedKitties<T>>::read(&sender, Some(kitty_id));
+			//let node = <OwnedKitties<T>>::read(&sender, Some(kitty_id));
 			//let bool = (node.prev == node.next) & (node.prev == None);
-			let bool = !(node.prev == None);;
+			//let bool = !(node.prev == None);;
 			//let owner = sender.clone();
-	    ensure!(bool, "You do not own this kitty");
+	    //ensure!(bool, "You do not own this kitty");
 	    //ensure!(<OwnedKitties<T>>::read(&sender, Some(kitty_id))  != None, "not owner");
 	    <OwnedKitties<T>>::append(&to, kitty_id);
 	    <OwnedKitties<T>>::remove(&sender, kitty_id);
