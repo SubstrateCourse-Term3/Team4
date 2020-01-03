@@ -60,11 +60,17 @@ decl_module! {
 			//let owner = Self::owner_of(kitty_id).ok_or("No owner for this kitty")?;
 			//let node : KittyLinkedItem = <OwnedKitties<T>>::read(&sender, kitty_id).ok_or("No owner")?;
 			//let node = <OwnedKitties<T>>::read(&sender, Some(kitty_id));
+			
+ 			//let bool = (node.prev == 0) & (node.next == 0);
 			//let bool = (node.prev == node.next) & (node.prev == None);
 			//let bool = !(node.prev == None);;
 			//let owner = sender.clone();
 	    //ensure!(bool, "You do not own this kitty");
-	    //ensure!(<OwnedKitties<T>>::read(&sender, Some(kitty_id))  != None, "not owner");
+	    //ensure!(<OwnedKitties<T>>::get(&sender, kitty_id)  != None, "not owner");
+	    //ensure!(bool, "not owner");
+	    //let node = Self::owned_kitties(sender.clone(), kitty_id);
+	    //ensure!(Self::owned_kitties(sender.clone(), kitty_id).is_some(),"not owner");
+	    ensure!(<OwnedKitties<T>>::exists((sender.clone(), Some(kitty_id))), "not owner");
 	    <OwnedKitties<T>>::append(&to, kitty_id);
 	    <OwnedKitties<T>>::remove(&sender, kitty_id);
 	    
