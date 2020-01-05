@@ -50,13 +50,14 @@ decl_module! {
 
 			// Create and store kitty
 			let kitty = Kitty(dna);
-			<Kitties<T>>::insert(kitty_id, kitty);
-			<KittiesCount<T>>::put(kitty_id + 1.into());
-
-			// Store the ownership information
-			let user_kitties_id = Self::owned_kitties_count(&sender);
-			<OwnedKitties<T>>::insert((sender.clone(), user_kitties_id), kitty_id);
-			<OwnedKittiesCount<T>>::insert(sender, user_kitties_id + 1.into());
+//			<Kitties<T>>::insert(kitty_id, kitty);
+//			<KittiesCount<T>>::put(kitty_id + 1.into());
+//
+//			// Store the ownership information
+//			let user_kitties_id = Self::owned_kitties_count(&sender);
+//			<OwnedKitties<T>>::insert((sender.clone(), user_kitties_id), kitty_id);
+//			<OwnedKittiesCount<T>>::insert(sender, user_kitties_id + 1.into());
+			Self::insert_kitty(sender,kitty_id,kitty);
 		}
 
 		/// Breed kitties
@@ -64,6 +65,28 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 
 			Self::do_breed(sender, kitty_id_1, kitty_id_2)?;
+		}
+
+
+		pub fn transfer(origin,from:T::AccountId,to:T::AccountId,kitty_id:T::KittyIndex){
+			let sender=ensure_signed(origin)?;
+			ensure!(from!=to,"Can't transfer to oneself");
+
+			let kitty=Self::kitty(kitty_id);
+
+			ensure!(kitty.is_some(), "kitty does not exist");
+
+
+			//from remove  kitty-1
+			let from_kitties_id = Self::owned_kitties_count(&from);
+			<OwnedKitties<T>>::insert((from.clone(), user_kitties_id), kitty_id);				<OwnedKitties<T>>::remove((from.clone(), from_kitties_id));
+			<OwnedKittiesCount<T>>::insert(from, user_kitties_id - 1.into());
+
+			//to add kitty
+			let to_kitties_id = Self::owned_kitties_count(&to);
+			<OwnedKitties<T>>::insert((to.clone(), to_kitties_id), kitty_id);
+			<OwnedKittiesCount<T>>::insert(to, to_kitties_id + 1.into());
+
 		}
 	}
 }
