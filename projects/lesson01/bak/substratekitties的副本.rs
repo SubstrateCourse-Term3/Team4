@@ -5,52 +5,49 @@ use support::{decl_module,
     StorageMap, 
     ensure, 
     dispatch::Result, 
-    traits::Randomness,
     Parameter    
 };
 use sp_runtime::traits::{ Bounded, SimpleArithmetic, Member};
 use system::ensure_signed;
 use codec::{Encode, Decode};
-use runtime_io::hashing::blake2_128;
+use runtime_io::blake2_128;
 use rstd::result;
 
 #[derive(Encode, Decode)]
-// pub struct Kitty(pub [u8;16]);
-pub struct Kitty{
-    dna: [u8;16],
-    price: u128,
-}
+pub struct Kitty(pub [u8;16]);
 
 #[cfg_attr(feature = "std", derive(Debug, PartialEq, Eq))]
 #[derive(Encode, Decode)]
 pub struct KittyLinkedItem<T: Trait>{
-    pub prev: Option<T::KittyIndex>,
-    pub next: Option<T::KittyIndex>,
+    pub prev: Option<T: KittyIndex>,
+    pub next: Option<T: KittyIndex>,
 }
-
-pub trait Trait: balances::Trait {
+pub trait Trait: system::Trait {
     type KittyIndex: Parameter + Member + SimpleArithmetic + Bounded + Copy + Default;
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+
 }
 
+
+
+///作业3:完成combine_dna函数 
 //测试测试数据dna1 = 0b11110000 dna2 = 0b11001100 selector=0b10101010 ,返回值0b11100100
+
 fn combine_dna(dna1: u8,dna2: u8,selector: u8) -> u8{
-    //亮的算法
-    ((selector & dna1) | (!selector & dna2))
-    //原算法
-    // let mut result_dna = 0;
-    // let mut tmp_dna;
-    // for i in 0..8 {
-    //     let mut selector_bit = 1;
-    //     selector_bit = selector_bit << i;
-    //     if selector & selector_bit == 1{
-    //         tmp_dna = dna1 & selector_bit;
-    //     }else{
-    //         tmp_dna = dna2 & selector_bit;
-    //     }
-    //     result_dna |= tmp_dna;
-    // }
-    // return result_dna;
+    //((selector & dna1) | (!selector & dna2))
+    let mut result_dna = 0;
+    let mut tmp_dna;
+    for i in 0..8 {
+        let mut selector_bit = 1;
+        selector_bit = selector_bit << i;
+        if selector & selector_bit == 1{
+            tmp_dna = dna1 & selector_bit;
+        }else{
+            tmp_dna = dna2 & selector_bit;
+        }
+        result_dna |= tmp_dna;
+    }
+    return result_dna;
 }
 impl<T: Trait> OwnedKitties<T>{
     fn read_head(account: &T::AccountId) -> KittyLinkedItem<T>{
@@ -120,29 +117,30 @@ decl_event! {
 decl_storage! {
     trait Store for  Module<T: Trait> as KittyStorage {
         
-        pub Kitties get(fn kitties): map T::KittyIndex => Option<Kitty>;
-        pub KittyOwner get(fn kitty_owner): map T::KittyIndex => Option<T::AccountId>;
-        pub KittiesCount get(fn kitties_count): T::KittyIndex;
+        pub Kitties get(kitties): map KittyIndex => Option<Kitty>;
+        pub KittiesCount get(kitties_count): KittyIndex;
 
         //Get kitty Id by Account Id and user kitty index
         //pub OwnedKitties get(owned_kitties): map (T::AccountId, KittyIndex) => KittyIndex;
         //Get number of kitties by account Id
         //pub OwnedKittiesCount get(owned_kitties_count): map T::AccountId => KittyIndex;
-        pub OwnedKitties get(fn owned_kitties): map (T::AccountId, Option<T::KittyIndex>) => Option<KittyLinkedItem<T>>;
+        
+        pub OwnedKitties get(owned_kitties): map (T::AccountId, Option<T::KittyIndex>) => Option<KittyLinkedItem<T>>;
     }
 }
 decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin{
-        fn deposit_event() = default;   
+
+        fn deposit_event() = default;
+///作业2:使用帮助函数重构了create_kitties函数        
         fn create_kitties(origin) -> Result {
             let sender = ensure_signed(origin)?;
-            let random_seed = <randomness_collective_flip::Module<T> as Randomness<T::Hash>>::random_seed();
+            
+            let random_seed = <system::Module<T>>::random_seed();
+            
             let dna = Self::random_value(&sender, &random_seed);
 
-            let kitty = Kitty{
-                dna: dna,
-                price: 0,
-            };
+            let kitty = Kitty(dna);
 
             let kitty_id = Self::next_kitty_id()?;
             
@@ -151,78 +149,33 @@ decl_module! {
             Self::deposit_event(RawEvent::Created(sender, random_seed));
             Ok(())
         }
-///作业1-1:给自己的小猫设置价格
-        //设置价格
-        fn set_pirce(origin, kitty_id: T::KittyIndex, price: u128){
-            let sender = ensure_signed(origin)?;
-
-            ensure!(<Kitties<T>>::exists(kitty_id), "This kitty does not exist");
-
-            let owner = Self::kitty_owner(kitty_id).ok_or("No owner for this kitty")?;
-            ensure!(owner == sender, "You do not own this cat");
-
-            let mut kitty = Self::kitties(kitty_id).unwrap();
-            kitty.price = price;
-
-            <Kitties<T>>::insert(kitty_id, kitty);
-        }
-///作业1-2:购买其他人的小猫
-        fn buy_kitty(origin, kitty_id: T::KittyIndex){
-            let sender = ensure_signed(origin)?;
-            //检测存在
-            ensure!(<Kitties<T>>::exists(kitty_id), "This kitty does not exist");
-            //获取主人
-            let owner = Self::kitty_owner(kitty_id).ok_or("No owner for this kitty")?;
-            ensure!(owner != sender, "You can't buy your own cat");
-
-            let kitty = Self::kitties(kitty_id).unwrap();
-
-            let kitty_price = kitty.price;
-            ensure!(kitty_price == 0, "The kitty you want to buy is not for sale");
-
-            //伪代码:购买将钱从sender转给owner
-            //transfer_cash(&sender, &owner, kitty_price)
-
-            //将小猫从owner转给sender
-            Self::transfer(&owner, &sender, kitty_id);
-        }
         //繁殖小猫
-        fn breed_kitty(origin, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) -> Result {
+        fn breed_kitty(origin,kitty_id_1:KittyIndex,kitty_id_2:KittyIndex) -> Result {
             let sender = ensure_signed(origin)?;
             Self::do_breed(sender,kitty_id_1,kitty_id_2)?;
             Ok(())
         }
-        //转移猫
-        fn transfer_kitty(origin, to: T::AccountId, kitty_id: T::KittyIndex) -> Result{
+///作业1:完成转移猫操作(依据原有数据结构，并没有使用链表数据结构)
+        fn transfer_kitty(origin, to: T::AccountId, user_kitty_id: KittyIndex) -> Result{
+            
             let sender = ensure_signed(origin)?;
-            let owner = Self::kitty_owner(kitty_id).ok_or("No owner for this kitty")?;
-            ensure!(owner == sender, "You do not own this kitty");
-            Self::transfer(&sender, &to, kitty_id);
             //根据AccountId和user_kitty_id获取kittyid
-            // let kittyid = Self::owned_kitties((sender.clone(),user_kitty_id));
-            // //更新数组
-            // <OwnedKitties<T>>::remove((sender.clone(),user_kitty_id));
-            // <OwnedKitties<T>>::insert((to.clone(),user_kitty_id),kittyid);
+            let kittyid = Self::owned_kitties((sender.clone(),user_kitty_id));
+            //更新数组
+            <OwnedKitties<T>>::remove((sender.clone(),user_kitty_id));
+            <OwnedKitties<T>>::insert((to.clone(),user_kitty_id),kittyid);
 
-            // //更新数量
-            // let owned_kitties_count_from = Self::owned_kitties_count(sender.clone()).checked_add(1).ok_or("Transfer kitty overflow")?;
-            // let owned_kitties_count_to = Self::owned_kitties_count(to.clone()).checked_sub(1).ok_or("Transfer kitty underflow")?;
-            // <OwnedKittiesCount<T>>::insert(to.clone(),owned_kitties_count_to);
-            // <OwnedKittiesCount<T>>::insert(sender.clone(),owned_kitties_count_from);
+            //更新数量
+            let owned_kitties_count_from = Self::owned_kitties_count(sender.clone()).checked_add(1).ok_or("Transfer kitty overflow")?;
+            let owned_kitties_count_to = Self::owned_kitties_count(to.clone()).checked_sub(1).ok_or("Transfer kitty underflow")?;
+            <OwnedKittiesCount<T>>::insert(to.clone(),owned_kitties_count_to);
+            <OwnedKittiesCount<T>>::insert(sender.clone(),owned_kitties_count_from);
             Ok(())
         }
     }
 }
 
 impl<T:Trait> Module<T>{
-//作业2:完成'transfer'
-    fn transfer (from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex){
-        <KittyOwner<T>>::insert(kitty_id,to);
-        //附加到新的账户
-        <OwnedKitties<T>>::append(to,kitty_id);
-        //从原有账户删除
-        <OwnedKitties<T>>::remove(from,kitty_id);
-    }
     //生成随机数
     fn random_value(sender: &T::AccountId,random_seed: &T::Hash) -> [u8;16]{
         let payload = (
@@ -234,24 +187,22 @@ impl<T:Trait> Module<T>{
         payload.using_encoded(blake2_128)
     }
     //下一只猫的id
-    fn next_kitty_id() -> result::Result<T::KittyIndex, &'static str>{
+    fn next_kitty_id() -> result::Result<KittyIndex, &'static str>{
         let kitty_id = Self::kitties_count();
         //检测是否溢出
-        if kitty_id == T::KittyIndex::max_value(){
+        if kitty_id == KittyIndex::max_value(){
             return Err("kitty count overflow");
         }
         Ok(kitty_id)
     }
 ///作业3:完成insert_owned_kitty
-    fn insert_owned_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex){
-        //使用链表方式给用户添加
-        <OwnedKitties<T>>::append(&owner, kitty_id);
+    fn insert_owned_kitty(owner: T::AccountId, kitty_id: T::KittyIndex){
+        
     }
     //生成新的小猫并做关联
-    fn insert_kitty(owner: T::AccountId, kitty_id: T::KittyIndex, kitty: Kitty){
-        <Kitties<T>>::insert(kitty_id, kitty);
-        <KittyOwner<T>>::insert(kitty_id, owner.clone());
-        <KittiesCount<T>>::put(kitty_id + 1.into());
+    fn insert_kitty(owner: T::AccountId, kitty_id: KittyIndex, kitty: Kitty){
+        Kitties::insert(kitty_id,kitty);
+        KittiesCount::put(kitty_id+1);
         //store the ownership information
         //用户拥有小猫的索引
         // let user_kitty_id =Self::owned_kitties_count(owner.clone());
@@ -259,32 +210,28 @@ impl<T:Trait> Module<T>{
         // <OwnedKitties<T>>::insert((owner.clone(),user_kitty_id),kitty_id);
         // //更新用户对应kitty的索引
         // <OwnedKittiesCount<T>>::insert(owner.clone(),user_kitty_id+1);
-        Self::insert_owned_kitty(&owner, kitty_id);
+        Self::insert_owned_kitty(owner, kitty_id);
     }
-    //繁殖小猫帮助函数
-    fn do_breed(sender: T::AccountId, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) -> Result {
+    //繁殖小猫封装，便于调试
+    fn do_breed(sender: T::AccountId, kitty_id_1: KittyIndex, kitty_id_2: KittyIndex) -> Result {
         let kitty1 = Self::kitties(kitty_id_1);
         let kitty2 = Self::kitties(kitty_id_2);
 
-        ensure!(kitty1.is_some(), "Invalid kitty_id_1");
-        ensure!(kitty2.is_some(), "Invalid kitty_id_2");
-        ensure!(kitty_id_1 != kitty_id_2, "Need different parent");
+        ensure!(kitty1.is_some(),"Invalid kitty_id_1");
+        ensure!(kitty2.is_some(),"Invalid kitty_id_2");
+        ensure!(kitty_id_1 != kitty_id_2,"Need different parent");
 
         let kitty_id = Self::next_kitty_id()?;
-        let kitty1_dna = kitty1.unwrap().dna;
-        let kitty2_dna = kitty2.unwrap().dna;
+        let kitty1_dna = kitty1.unwrap().0;
+        let kitty2_dna = kitty2.unwrap().0;
         
-        let random_seed = <randomness_collective_flip::Module<T> as Randomness<T::Hash>>::random_seed();
+        let random_seed = <system::Module<T>>::random_seed();
         let selector = Self::random_value(&sender,&random_seed);
         let mut new_dna=[0u8;16];
         for i in 0..kitty1_dna.len() {
             new_dna[i] = combine_dna(kitty1_dna[i],kitty2_dna[i],selector[i]);
         }
-        let new_kitty = Kitty{
-            dna: new_dna,
-            price: 0,
-        };
-        Self::insert_kitty(sender.clone(), kitty_id, new_kitty);
+        Self::insert_kitty(sender.clone(),kitty_id,Kitty(new_dna));
         Ok(())
     }
 }

@@ -3,7 +3,7 @@ run:
 check:
 	SKIP_WASM_BUILD= cargo check
 build:
-	SKIP_WASM_BUILD= cargo build
+	SKIP_WASM_BUILD= cargo build --release
 purge:
 	SKIP_WASM_BUILD= cargo run -- purge-chain --dev -y
 restart: purge run
