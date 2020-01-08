@@ -20,7 +20,7 @@ impl<Storage, Key, Value> LinkedList<Storage, Key, Value> where
     fn write_head(key: &Key, item: LinkedItem<Value>){
         Self::write(key, None, item)
     }
-    fn read(account: &Key, key: Option<Value>) -> LinkedItem<Value>{
+    pub fn read(account: &Key, key: Option<Value>) -> LinkedItem<Value>{
         Storage::get(&(account.clone(), key)).unwrap_or_else(|| LinkedItem{
             prev:None,
             next:None,
