@@ -108,7 +108,8 @@ fn vector_is_prime(num: u64, p: &[u64]) -> bool {
 				prev:item.prev,
 				next:next.next,
 			};
-			Self
+			Self::write(key,item.next,new_next);
+			Storage::remove((key,Some(value)));
 		}
     }
 }
